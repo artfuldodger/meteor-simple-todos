@@ -19,3 +19,9 @@ if Meteor.isClient
 
       # Prevent default form submit
       false
+
+  Template.task.events
+    'click .toggle-checked': ->
+      Tasks.update(this._id, { $set: { checked: not this.checked } })
+    'click .delete': ->
+      Tasks.remove(this._id)
