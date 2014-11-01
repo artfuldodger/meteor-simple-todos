@@ -17,8 +17,10 @@ if Meteor.isClient
       text = event.target.text.value
 
       Tasks.insert(
-        text: text,
-        createdAt: new Date()
+        text:      text,
+        createdAt: new Date(),
+        owner:     Meteor.userId(),
+        username:  Meteor.user().username
       )
 
       # Clear form
@@ -34,3 +36,6 @@ if Meteor.isClient
       Tasks.update(this._id, { $set: { checked: not this.checked } })
     'click .delete': ->
       Tasks.remove(this._id)
+
+  Accounts.ui.config
+    passwordSignupFields: 'USERNAME_ONLY'
