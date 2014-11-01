@@ -3,7 +3,7 @@ Tasks = new Mongo.Collection('tasks')
 if Meteor.isClient
   Template.body.helpers
     tasks: ->
-      Tasks.find({})
+      Tasks.find({}, { sort: { createdAt: -1 } })
 
   Template.body.events
     'submit .new-task': (event) ->
