@@ -1,6 +1,8 @@
 Tasks = new Mongo.Collection('tasks')
 
 if Meteor.isClient
+  Meteor.subscribe 'tasks'
+
   Template.body.helpers
     tasks: ->
       if Session.get('hideCompleted')
@@ -31,6 +33,12 @@ if Meteor.isClient
       Meteor.call('setChecked', this._id, not this.checked)
     'click .delete': ->
       Meteor.call('deleteTask', this._id)
+    'click .toggle-private': ->
+      Meteor.call('setPrivate', this._id, not this.private)
+
+  Template.task.helpers
+    isOwner: ->
+      this.owner is Meteor.userId()
 
   Accounts.ui.config
     passwordSignupFields: 'USERNAME_ONLY'
@@ -46,6 +54,23 @@ Meteor.methods
       username:  Meteor.user().username
     )
   deleteTask: (taskId) ->
+    task = Tasks.findOne(taskId)
+    throw new Meteor.Error('not-authorized') if task.private and task.owner isnt Meteor.userId()
     Tasks.remove(taskId)
   setChecked: (taskId, setChecked) ->
+    task = Tasks.findOne(taskId)
+    throw new Meteor.Error('not-authorized') if task.private and task.owner isnt Meteor.userId()
     Tasks.update(taskId, { $set: { checked: setChecked } })
+  setPrivate: (taskId, setToPrivate) ->
+    task = Tasks.findOne(taskId)
+    throw new Meteor.Error('not-authorized') unless task.owner is Meteor.userId()
+    Tasks.update(taskId, { $set: { private: setToPrivate } })
+
+if Meteor.isServer
+  Meteor.publish 'tasks', ->
+    Tasks.find(
+      $or: [
+        { private: { $ne: true } }
+        { owner: this.userId }
+      ]
+    )
